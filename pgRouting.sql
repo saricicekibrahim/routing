@@ -71,11 +71,11 @@ BEGIN
 	SELECT ST_union(geom) from all_routes INTO all_added_route;
 	
 	--for start edge - point to end. for end edge start to point 
-	select hvl_multi_line_locate_point(source_code.geom, (select ST_GeometryN(st_intersection(source_code.geom, all_added_route),1))) into line_start_begin;
-	select hvl_multi_line_locate_point(source_code.geom, start_pt ) into line_start_finish;
+	select multi_line_locate_point(source_code.geom, (select ST_GeometryN(st_intersection(source_code.geom, all_added_route),1))) into line_start_begin;
+	select multi_line_locate_point(source_code.geom, start_pt ) into line_start_finish;
 	
-	select hvl_multi_line_locate_point(target_code.geom, end_pt) into line_end_finish;
-	select hvl_multi_line_locate_point(target_code.geom, (select ST_GeometryN(st_intersection(target_code.geom, all_added_route),1))) into line_end_begin;
+	select multi_line_locate_point(target_code.geom, end_pt) into line_end_finish;
+	select multi_line_locate_point(target_code.geom, (select ST_GeometryN(st_intersection(target_code.geom, all_added_route),1))) into line_end_begin;
 		
 	if line_start_finish > line_start_begin THEN
 		select ST_LineSubstring(source_code.geom, line_start_begin, line_start_finish) into start_geom;
@@ -101,4 +101,27 @@ END;
 $BODY$;
 
 ALTER FUNCTION public.my_awesome_routing_function(text, numeric, numeric, numeric, numeric)
+    OWNER TO postgres;
+
+CREATE OR REPLACE FUNCTION public.multi_line_locate_point(
+	line geometry,
+	point geometry)
+    RETURNS numeric
+    LANGUAGE 'sql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+select (base + extra) / ST_Length(line)
+from (
+    select 
+        sum(ST_Length(l.geom)) over (order by l.path) - ST_Length(l.geom) base,
+        ST_LineLocatePoint(l.geom, point) * ST_Length(l.geom) extra,
+        ST_Distance(l.geom, point) dist
+    from ST_Dump(line) l
+) points
+order by dist
+limit 1;
+$BODY$;
+
+ALTER FUNCTION public.multi_line_locate_point(geometry, geometry)
     OWNER TO postgres;
