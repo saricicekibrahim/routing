@@ -1,0 +1,22 @@
+{
+  "oneWayColumn": "oneWayColumn",
+  "oneWayTypes": [
+  {
+    "orjType": "0",
+    "osmType": "no"
+  },
+    {
+      "orjType": "1",
+      "osmType": "yes"
+    }
+  ],
+  "laneColumn": "laneColumn",
+  "nameColumn": "nameColumn",
+  "wayTypeColumn": "wayTypeColumn",
+  "wayTypes": [
+    {
+      "orjType": 1,
+      "osmType": "motorway"
+    }
+  ]
+}
